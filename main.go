@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 )
@@ -11,43 +12,25 @@ type API struct {
 	Message string "json:message"
 }
 
-type User struct {
-	ID        int    "json:id"
-	Firstname string "json:firstname"
-	Lastname  string "json:lastname"
-	Age       int    "json:age"
+func Hello(w http.ResponseWriter, r *http.Request) {
+	urlParams := mux.Vars(r)
+	id := urlParams["id"]
+	kullanici := "Kullanici: " + id
+
+	message := API{kullanici}
+
+	output, err := json.Marshal(message)
+
+	checkError(err)
+
+	fmt.Fprintf(w, string(output))
 }
-
 func main() {
-	apiRoot := "/api"
-	http.HandleFunc(apiRoot, func(w http.ResponseWriter, r *http.Request) {
-		message := API{"API Home"}
-		output, err := json.Marshal(message)
-		checkError(err)
-		fmt.Fprintf(w, string(output))
-	})
 
-	http.HandleFunc(apiRoot+"/users", func(w http.ResponseWriter, r *http.Request) {
-		users := []User{
-			User{
-				ID:        0,
-				Firstname: "zafer",
-				Lastname:  "caliskan",
-				Age:       24,
-			},
-			User{
-				ID:        1,
-				Firstname: "Gizem",
-				Lastname:  "Hamamcioglu",
-				Age:       22,
-			},
-		}
+	gorillaRoute := mux.NewRouter()
+	gorillaRoute.HandleFunc("/hello/{id:[0-9]+}", Hello)
 
-		output, err := json.Marshal(users)
-
-		checkError(err)
-		fmt.Fprintf(w, string(output))
-	})
+	http.Handle("/", gorillaRoute)
 
 	http.ListenAndServe(":8080", nil)
 }
